@@ -43,22 +43,23 @@ router.post("/add-question", async (req, res) => {
    START INTERVIEW
 ========================= */
 router.post("/start", async (req, res) => {
-  console.log("BODY RECEIVED:", req.body);
-
   try {
     const { userId, domain, difficulty } = req.body;
 
-    const questions = await Question.aggregate([
-      { $match: { domain, difficulty } },
-      { $sample: { size: 5 } }
-    ]);
+    console.log("BODY RECEIVED:", req.body);
+
+    if (!domain || !difficulty) {
+      return res.status(400).json({ message: "Domain and difficulty required" });
+    }
+
+    const questions = await Question.find({ domain, difficulty }).limit(5);
 
     if (!questions.length) {
-      return res.status(400).json({ message: "No questions found" });
+      return res.status(400).json({ message: "No questions found in DB" });
     }
 
     const interview = await Interview.create({
-      userId,
+      userId: userId || "demoUser",
       domain,
       difficulty,
       questionIds: questions.map(q => q._id),
@@ -71,9 +72,11 @@ router.post("/start", async (req, res) => {
     });
 
   } catch (err) {
+    console.error("START ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 /* =========================
    ANSWER QUESTION (AI)
