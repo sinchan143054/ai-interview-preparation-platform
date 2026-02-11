@@ -43,6 +43,8 @@ router.post("/add-question", async (req, res) => {
    START INTERVIEW
 ========================= */
 router.post("/start", async (req, res) => {
+  console.log("BODY RECEIVED:", req.body);
+
   try {
     const { userId, domain, difficulty } = req.body;
 
