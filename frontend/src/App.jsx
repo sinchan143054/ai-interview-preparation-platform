@@ -1,86 +1,66 @@
 import { useState } from "react";
+import axios from "axios";
+import "./App.css";
+
+const API_BASE = "https://ai-interview-preparation-platform.onrender.com";
 
 function App() {
-  const [interviewId, setInterviewId] = useState(null);
-  const [question, setQuestion] = useState(null);
+  const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState(null);
 
   const startInterview = async () => {
-    const res = await fetch("http://localhost:5000/api/interview/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: "67962ace9a8f495171d3f0db",
-        domain: "frontend",
-        difficulty: "easy"
-      })
-    });
-
-    const data = await res.json();
-    setInterviewId(data.interviewId);
-    setQuestion(data.question);
+    try {
+      const res = await axios.get(`${API_BASE}/api/interview/start`);
+      setQuestion(res.data.question);
+      setResult(null);
+      setAnswer("");
+    } catch (error) {
+      console.error(error);
+      alert("Error starting interview");
+    }
   };
 
   const submitAnswer = async () => {
-  const res = await fetch("http://localhost:5000/api/interview/answer", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ interviewId, userAnswer: answer })
-  });
-
-  const data = await res.json();
-  setAnswer("");
-
-  if (data.nextQuestion) {
-    setQuestion(data.nextQuestion);
-  } else if (data.message) {
-    finishInterview();
-  }
-};
-
-
-  const finishInterview = async () => {
-    const res = await fetch("http://localhost:5000/api/interview/finish", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ interviewId })
-    });
-
-    const data = await res.json();
-    setQuestion(null);
-    setResult(data);
+    try {
+      const res = await axios.post(
+        `${API_BASE}/api/interview/submit`,
+        { answer }
+      );
+      setResult(res.data);
+    } catch (error) {
+      console.error(error);
+      alert("Error submitting answer");
+    }
   };
 
   return (
-    <div style={{ padding: "40px" }}>
+    <div className="container">
       <h1>AI Interview Platform</h1>
 
-      {!interviewId && <button onClick={startInterview}>Start Interview</button>}
+      {!question && (
+        <button onClick={startInterview}>Start Interview</button>
+      )}
 
-      {question && (
+      {question && !result && (
         <>
-          <h3>{question.question}</h3>
+          <h3>{question}</h3>
           <textarea
-            rows="5"
-            cols="60"
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
+            placeholder="Type your answer here..."
           />
-          <br /><br />
+          <br />
           <button onClick={submitAnswer}>Submit Answer</button>
         </>
       )}
 
       {result && (
-        <>
-          <h2>Interview Result</h2>
-          <p>Overall: {result.overallScore}</p>
-         <p>Technical: {result.skillSummary?.technical ?? 0}</p>
-<p>Communication: {result.skillSummary?.communication ?? 0}</p>
-<p>Confidence: {result.skillSummary?.confidence ?? 0}</p>
-
-        </>
+        <div className="result">
+          <h2>Score: {result.score}</h2>
+          <p>Feedback: {result.feedback}</p>
+          <button onClick={startInterview}>Try Again</button>
+        </div>
       )}
     </div>
   );
