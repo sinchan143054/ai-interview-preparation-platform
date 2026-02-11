@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import "./App.css";
 
+// 🔥 IMPORTANT: Your live backend URL
 const API_BASE = "https://ai-interview-preparation-platform.onrender.com";
 
 function App() {
