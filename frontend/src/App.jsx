@@ -5,22 +5,25 @@ import "./App.css";
 const API_BASE = "https://ai-interview-preparation-platform.onrender.com";
 
 function App() {
-  const [interviewId, setInterviewId] = useState(null);
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
-  const [finished, setFinished] = useState(false);
+  const [interviewId, setInterviewId] = useState(null);
+  const [result, setResult] = useState(null);
 
   const startInterview = async () => {
     try {
-      const res = await axios.post(`${API_BASE}/api/interview/start`, {
-        userId: "demoUser",
-        domain: "mern",
-        difficulty: "easy"
-      });
+      const res = await axios.post(
+        `${API_BASE}/api/interview/start`,
+        {
+          userId: "demoUser123",
+          domain: "mern",
+          difficulty: "easy"
+        }
+      );
 
       setInterviewId(res.data.interviewId);
       setQuestion(res.data.question.question);
-      setFinished(false);
+      setResult(null);
       setAnswer("");
     } catch (error) {
       console.error(error);
@@ -30,19 +33,22 @@ function App() {
 
   const submitAnswer = async () => {
     try {
-      const res = await axios.post(`${API_BASE}/api/interview/answer`, {
-        interviewId,
-        userAnswer: answer
-      });
+      const res = await axios.post(
+        `${API_BASE}/api/interview/answer`,
+        {
+          interviewId,
+          userAnswer: answer
+        }
+      );
 
-      if (res.data.message === "Interview finished") {
-        setFinished(true);
-        setQuestion("");
-      } else {
+      if (res.data.nextQuestion) {
         setQuestion(res.data.nextQuestion.question);
+        setAnswer("");
+      } else {
+        setResult("Interview Finished");
+        setQuestion("");
       }
 
-      setAnswer("");
     } catch (error) {
       console.error(error);
       alert("Error submitting answer");
@@ -53,8 +59,10 @@ function App() {
     <div className="container">
       <h1>AI Interview Platform</h1>
 
-      {!question && !finished && (
-        <button onClick={startInterview}>Start Interview</button>
+      {!question && !result && (
+        <button onClick={startInterview}>
+          Start Interview
+        </button>
       )}
 
       {question && (
@@ -66,14 +74,18 @@ function App() {
             placeholder="Type your answer here..."
           />
           <br />
-          <button onClick={submitAnswer}>Submit Answer</button>
+          <button onClick={submitAnswer}>
+            Submit Answer
+          </button>
         </>
       )}
 
-      {finished && (
+      {result && (
         <div>
-          <h2>Interview Completed 🎉</h2>
-          <button onClick={startInterview}>Try Again</button>
+          <h2>{result}</h2>
+          <button onClick={startInterview}>
+            Try Again
+          </button>
         </div>
       )}
     </div>
