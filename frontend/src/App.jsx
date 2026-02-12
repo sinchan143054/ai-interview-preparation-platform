@@ -15,8 +15,8 @@ function App() {
       const res = await axios.post(
         `${API_BASE}/api/interview/start`,
         {
-          userId: "demoUser123",
-          domain: "mern",
+          userId: "69731c4f7fe79112d4cdaa3d",
+          domain: "frontend",
           difficulty: "easy"
         }
       );

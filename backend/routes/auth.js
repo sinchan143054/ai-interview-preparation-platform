@@ -1,24 +1,58 @@
 const express = require("express");
-const Question = require("../models/Question");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
 const router = express.Router();
 
-// Add question (admin)
-router.post("/add-question", async (req, res) => {
+// REGISTER
+router.post("/register", async (req, res) => {
   try {
-    const q = await Question.create(req.body);
-    res.status(201).json(q);
+    const { name, email, password } = req.body;
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await User.create({
+      name,
+      email,
+      password: hashedPassword
+    });
+
+    res.status(201).json({ message: "User registered successfully" });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get questions (candidate)
-router.get("/questions", async (req, res) => {
+// LOGIN
+router.post("/login", async (req, res) => {
   try {
-    const { role, difficulty } = req.query;
-    const questions = await Question.find({ role, difficulty }).limit(5);
-    res.json(questions);
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      "secret123",
+      { expiresIn: "1d" }
+    );
+
+    res.json({ message: "Login successful", token });
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

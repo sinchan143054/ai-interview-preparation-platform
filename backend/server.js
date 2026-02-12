@@ -25,7 +25,7 @@ app.get("/", (req, res) => {
   res.send("AI Interview Platform Backend is running 🚀");
 });
 
-// ✅ IMPORTANT: use process.env.PORT
+// IMPORTANT: use process.env.PORT
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
