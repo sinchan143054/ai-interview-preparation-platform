@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import "./App.css";
 
-const API_BASE = "https://ai-interview-preparation-platform.onrender.com";
+const API_BASE = "https://ai-interview-preparation-platform-2.onrender.com";
 
 function App() {
   const [question, setQuestion] = useState("");
