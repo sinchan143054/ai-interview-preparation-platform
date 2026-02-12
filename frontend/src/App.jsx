@@ -11,19 +11,18 @@ function App() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // 🔵 START INTERVIEW
+  /* =========================
+     START INTERVIEW
+  ========================= */
   const startInterview = async () => {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        `${API_BASE}/api/interview/start`,
-        {
-          userId: "69731c4f7fe79112d4cdaa3d",
-          domain: "frontend",
-          difficulty: "easy"
-        }
-      );
+      const res = await axios.post(`${API_BASE}/api/interview/start`, {
+        userId: "demoUser",
+        domain: "frontend",
+        difficulty: "easy"
+      });
 
       setInterviewId(res.data.interviewId);
       setQuestion(res.data.question.question);
@@ -32,36 +31,64 @@ function App() {
 
     } catch (error) {
       console.error(error);
-      alert("Server waking up... wait 30 sec and click again");
+      alert("Server slow (free hosting). Wait 10 sec and try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🟣 SUBMIT ANSWER
+  /* =========================
+     FINISH + GET SCORE
+  ========================= */
+  const finishInterview = async () => {
+    try {
+      const res = await axios.post(`${API_BASE}/api/interview/finish`, {
+        interviewId
+      });
+
+      const data = res.data;
+
+      setResult(`
+🎉 Interview Completed!
+
+⭐ Overall Score: ${data.overallScore}
+
+🧠 Technical: ${data.skillSummary.technical}
+💬 Communication: ${data.skillSummary.communication}
+🔥 Confidence: ${data.skillSummary.confidence}
+🧩 Problem Solving: ${data.skillSummary.problemSolving}
+      `);
+
+    } catch (err) {
+      console.error(err);
+      setResult("Interview finished but score error");
+    }
+  };
+
+  /* =========================
+     SUBMIT ANSWER
+  ========================= */
   const submitAnswer = async () => {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        `${API_BASE}/api/interview/answer`,
-        {
-          interviewId,
-          userAnswer: answer
-        }
-      );
+      const res = await axios.post(`${API_BASE}/api/interview/answer`, {
+        interviewId,
+        userAnswer: answer
+      });
 
       if (res.data.nextQuestion) {
         setQuestion(res.data.nextQuestion.question);
         setAnswer("");
       } else {
-        setResult("Interview Finished 🎉");
+        // 🔥 interview finished
+        await finishInterview();
         setQuestion("");
       }
 
     } catch (error) {
       console.error(error);
-      alert("Server slow (free hosting). Wait few seconds.");
+      alert("Please wait... free server waking up");
     } finally {
       setLoading(false);
     }
@@ -71,35 +98,37 @@ function App() {
     <div className="container">
       <h1>AI Interview Platform</h1>
 
-      {loading && <p>⏳ Loading... please wait (free server waking)</p>}
-
+      {/* START BUTTON */}
       {!question && !result && (
-        <button onClick={startInterview}>
-          Start Interview
+        <button onClick={startInterview} disabled={loading}>
+          {loading ? "Starting..." : "Start Interview"}
         </button>
       )}
 
+      {/* QUESTION SECTION */}
       {question && (
         <>
           <h3>{question}</h3>
+
           <textarea
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             placeholder="Type your answer here..."
           />
+
           <br />
-          <button onClick={submitAnswer}>
-            Submit Answer
+
+          <button onClick={submitAnswer} disabled={loading}>
+            {loading ? "Evaluating..." : "Submit Answer"}
           </button>
         </>
       )}
 
+      {/* RESULT */}
       {result && (
         <div>
-          <h2>{result}</h2>
-          <button onClick={startInterview}>
-            Try Again
-          </button>
+          <h2 style={{whiteSpace:"pre-line"}}>{result}</h2>
+          <button onClick={startInterview}>Try Again</button>
         </div>
       )}
     </div>
