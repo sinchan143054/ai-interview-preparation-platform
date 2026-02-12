@@ -5,126 +5,134 @@ import "./App.css";
 const API_BASE = "https://ai-interview-preparation-platform-2.onrender.com";
 
 function App() {
-const [question, setQuestion] = useState("");
-const [answer, setAnswer] = useState("");
-const [interviewId, setInterviewId] = useState(null);
-const [result, setResult] = useState(null);
-const [loading, setLoading] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [answer, setAnswer] = useState("");
+  const [interviewId, setInterviewId] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-/* =========================
-START INTERVIEW
-========================= */
-const startInterview = async () => {
-try {
-setLoading(true);
+  /* ================= START INTERVIEW ================= */
+  const startInterview = async () => {
+    try {
+      setLoading(true);
+      setResult(null);
 
-const res = await axios.post(`${API_BASE}/api/interview/start`, {
-    userId: "demoUser",
-    domain: "frontend",
-    difficulty: "easy"
-  });
+      const res = await axios.post(`${API_BASE}/api/interview/start`, {
+        userId: "demoUser",
+        domain: "frontend",
+        difficulty: "easy"
+      });
 
-  setInterviewId(res.data.interviewId);
-  setQuestion(res.data.question.question);
-  setResult(null);
-  setAnswer("");
+      setInterviewId(res.data.interviewId);
+      setQuestion(res.data.question.question);
+      setAnswer("");
 
-} catch (error) {
-  console.error(error);
-  alert("Server waking up... wait few seconds & click again");
-} finally {
-  setLoading(false);
-}
-
-};
-
-/* =========================
-SUBMIT ANSWER
-========================= */
-const submitAnswer = async () => {
-try {
-setLoading(true);
-
-
-  const res = await axios.post(
-    `${API_BASE}/api/interview/answer`,
-    {
-      interviewId,
-      userAnswer: answer
+    } catch (error) {
+      alert("⏳ Server waking up (free hosting). Click again in 10 sec.");
+    } finally {
+      setLoading(false);
     }
-  );
+  };
 
-  // NEXT QUESTION
-  if (res.data.nextQuestion) {
-    setQuestion(res.data.nextQuestion.question);
-    setAnswer("");
-    return;
-  }
+  /* ================= SUBMIT ANSWER ================= */
+  const submitAnswer = async () => {
+    if (!answer) {
+      alert("Type answer first");
+      return;
+    }
 
-  // INTERVIEW FINISHED + SCORE
-  if (res.data.finished) {
-    const s = res.data.score;
+    try {
+      setLoading(true);
 
-    setResult(`
+      const res = await axios.post(`${API_BASE}/api/interview/answer`, {
+        interviewId,
+        userAnswer: answer
+      });
+
+      // next question
+      if (res.data.nextQuestion) {
+        setQuestion(res.data.nextQuestion.question);
+        setAnswer("");
+        setLoading(false);
+        return;
+      }
+
+      // finished interview
+      if (res.data.message === "Interview finished") {
+        setQuestion("");
+        await finishInterview();
+      }
+
+    } catch (err) {
+      alert("Server slow 😅 wait 5 sec & click again");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= GET FINAL SCORE ================= */
+  const finishInterview = async () => {
+    try {
+      const res = await axios.post(`${API_BASE}/api/interview/finish`, {
+        interviewId
+      });
+
+      const score = res.data;
+
+      setResult(`
 🎉 Interview Completed!
 
-⭐ Overall Score: ${s.overallScore}
+⭐ Overall Score: ${score.overallScore}/100
 
-🧠 Technical: ${s.technical}
-💬 Communication: ${s.communication}
-🔥 Confidence: ${s.confidence}
-`);
+🧠 Technical: ${score.technical}/25
+💬 Communication: ${score.communication}/25
+🔥 Confidence: ${score.confidence}/25
+      `);
 
-    setQuestion("");
-  }
+    } catch (err) {
+      setResult("Interview finished but score error");
+    }
+  };
 
-} catch (error) {
-  console.error(error);
-  alert("Server slow (free hosting). Please wait...");
-} finally {
-  setLoading(false);
-}
+  return (
+    <div className="container">
+      <h1>🎤 AI Interview Platform</h1>
 
-};
+      {/* START BUTTON */}
+      {!question && !result && (
+        <button onClick={startInterview} disabled={loading}>
+          {loading ? "⏳ Starting Interview..." : "Start Interview"}
+        </button>
+      )}
 
-return ( <div className="container"> <h1>AI Interview Platform</h1>
+      {/* QUESTION */}
+      {question && (
+        <>
+          <h3>{question}</h3>
 
-  {/* START BUTTON */}
-  {!question && !result && (
-    <button onClick={startInterview} disabled={loading}>
-      {loading ? "Starting..." : "Start Interview"}
-    </button>
-  )}
+          <textarea
+            value={answer}
+            onChange={(e) => setAnswer(e.target.value)}
+            placeholder="Type your answer here..."
+          />
 
-  {/* QUESTION SECTION */}
-  {question && (
-    <>
-      <h3>{question}</h3>
+          <br />
 
-      <textarea
-        value={answer}
-        onChange={(e) => setAnswer(e.target.value)}
-        placeholder="Type your answer here..."
-      />
+          <button onClick={submitAnswer} disabled={loading}>
+            {loading ? "⏳ Evaluating..." : "Submit Answer"}
+          </button>
+        </>
+      )}
 
-      <br />
-
-      <button onClick={submitAnswer} disabled={loading}>
-        {loading ? "Evaluating..." : "Submit Answer"}
-      </button>
-    </>
-  )}
-
-  {/* RESULT SECTION */}
-  {result && (
-    <div>
-      <h2 style={{ whiteSpace: "pre-line" }}>{result}</h2>
-      <button onClick={startInterview}>Try Again</button>
+      {/* RESULT */}
+      {result && (
+        <div>
+          <h2 style={{ whiteSpace: "pre-line" }}>{result}</h2>
+          <button onClick={startInterview}>Try Again</button>
+        </div>
+      )}
     </div>
-  )}
-</div>
-
-);
+  );
 }
 
 export default App;
