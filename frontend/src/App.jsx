@@ -9,38 +9,40 @@ function App() {
   const [answer, setAnswer] = useState("");
   const [interviewId, setInterviewId] = useState(null);
   const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
- const submitAnswer = async () => {
-  try {
-    setLoading(true);
+  // 🔵 START INTERVIEW
+  const startInterview = async () => {
+    try {
+      setLoading(true);
 
-    const res = await axios.post(
-      `${API_BASE}/api/interview/answer`,
-      {
-        interviewId,
-        userAnswer: answer
-      }
-    );
+      const res = await axios.post(
+        `${API_BASE}/api/interview/start`,
+        {
+          userId: "69731c4f7fe79112d4cdaa3d",
+          domain: "frontend",
+          difficulty: "easy"
+        }
+      );
 
-    if (res.data.nextQuestion) {
-      setQuestion(res.data.nextQuestion.question);
+      setInterviewId(res.data.interviewId);
+      setQuestion(res.data.question.question);
+      setResult(null);
       setAnswer("");
-    } else {
-      setResult("Interview Finished");
-      setQuestion("");
+
+    } catch (error) {
+      console.error(error);
+      alert("Server waking up... wait 30 sec and click again");
+    } finally {
+      setLoading(false);
     }
+  };
 
-  } catch (error) {
-    console.error(error);
-    alert("Please wait... server is slow (free hosting)");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  // 🟣 SUBMIT ANSWER
   const submitAnswer = async () => {
     try {
+      setLoading(true);
+
       const res = await axios.post(
         `${API_BASE}/api/interview/answer`,
         {
@@ -53,19 +55,23 @@ function App() {
         setQuestion(res.data.nextQuestion.question);
         setAnswer("");
       } else {
-        setResult("Interview Finished");
+        setResult("Interview Finished 🎉");
         setQuestion("");
       }
 
     } catch (error) {
       console.error(error);
-      alert("Error submitting answer");
+      alert("Server slow (free hosting). Wait few seconds.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="container">
       <h1>AI Interview Platform</h1>
+
+      {loading && <p>⏳ Loading... please wait (free server waking)</p>}
 
       {!question && !result && (
         <button onClick={startInterview}>
