@@ -156,54 +156,20 @@ router.post("/answer", async (req, res) => {
   if (interview.currentQuestionIndex >= interview.questionIds.length) {
 
   // ===== CALCULATE FINAL SCORE =====
-  const answers = await Answer.find({
-    interviewId: new mongoose.Types.ObjectId(interviewId)
-  });
-
-  let total = 0, tech = 0, comm = 0, conf = 0;
-
-  answers.forEach(a => {
-    total += a.aiScore || 0;
-    tech += a.skillScores?.technical || 0;
-    comm += a.skillScores?.communication || 0;
-    conf += a.skillScores?.confidence || 0;
-  });
-
-  const count = answers.length;
-
-  const finalScore = {
-    overallScore: Math.round(total / count),
-    technical: Math.round(tech / count),
-    communication: Math.round(comm / count),
-    confidence: Math.round(conf / count)
-  };
-
-  return res.json({
-    finished: true,
-    score: finalScore
-  });
-}
-
-
-    res.json({
-      nextQuestion: interview.questionIds[interview.currentQuestionIndex]
-    });
-
-  } catch (err) {
-    console.error("ANSWER ERROR:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-/* =========================
+  /* =========================
    FINISH INTERVIEW + SCORE
 ========================= */
 router.post("/finish", async (req, res) => {
   try {
     const { interviewId } = req.body;
 
+    if (!interviewId) {
+      return res.status(400).json({ message: "InterviewId required" });
+    }
+
+    // ✅ convert to ObjectId properly
     const answers = await Answer.find({
-      interviewId: new mongoose.Types.ObjectId(interviewId)
+      interviewId: interviewId
     });
 
     if (!answers.length) {
@@ -231,8 +197,10 @@ router.post("/finish", async (req, res) => {
     res.json(finalScore);
 
   } catch (err) {
+    console.log("FINISH ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 module.exports = router;
