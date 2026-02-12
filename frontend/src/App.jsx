@@ -10,26 +10,34 @@ function App() {
   const [interviewId, setInterviewId] = useState(null);
   const [result, setResult] = useState(null);
 
-  const startInterview = async () => {
-    try {
-      const res = await axios.post(
-        `${API_BASE}/api/interview/start`,
-        {
-          userId: "69731c4f7fe79112d4cdaa3d",
-          domain: "frontend",
-          difficulty: "easy"
-        }
-      );
+ const submitAnswer = async () => {
+  try {
+    setLoading(true);
 
-      setInterviewId(res.data.interviewId);
-      setQuestion(res.data.question.question);
-      setResult(null);
+    const res = await axios.post(
+      `${API_BASE}/api/interview/answer`,
+      {
+        interviewId,
+        userAnswer: answer
+      }
+    );
+
+    if (res.data.nextQuestion) {
+      setQuestion(res.data.nextQuestion.question);
       setAnswer("");
-    } catch (error) {
-      console.error(error);
-      alert("Error starting interview");
+    } else {
+      setResult("Interview Finished");
+      setQuestion("");
     }
-  };
+
+  } catch (error) {
+    console.error(error);
+    alert("Please wait... server is slow (free hosting)");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const submitAnswer = async () => {
     try {
