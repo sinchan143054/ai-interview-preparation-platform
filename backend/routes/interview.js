@@ -42,33 +42,44 @@ res.status(500).json({ error: err.message });
 START INTERVIEW
 ========================= */
 router.post("/start", async (req, res) => {
-try {
-const { userId, domain, difficulty } = req.body;
+  try {
+    const { userId, domain, difficulty } = req.body;
 
-```
-const questions = await Question.find({ domain, difficulty }).limit(5);
+    console.log("BODY RECEIVED:", req.body);
 
-if (!questions.length) {
-  return res.status(400).json({ message: "No questions found" });
-}
+    if (!domain || !difficulty) {
+      return res.status(400).json({ message: "Domain and difficulty required" });
+    }
 
-const interview = await Interview.create({
-  userId: userId || "demoUser",
-  domain,
-  difficulty,
-  questionIds: questions.map(q => q._id),
-  currentQuestionIndex: 0
-});
+    // 🔥 MAKE SEARCH CASE INSENSITIVE
+    const questions = await Question.find({
+      domain: { $regex: new RegExp("^" + domain + "$", "i") },
+      difficulty: { $regex: new RegExp("^" + difficulty + "$", "i") }
+    }).limit(5);
 
-res.status(201).json({
-  interviewId: interview._id,
-  question: questions[0]
-});
-```
+    console.log("QUESTIONS FOUND:", questions.length);
 
-} catch (err) {
-res.status(500).json({ error: err.message });
-}
+    if (!questions || questions.length === 0) {
+      return res.status(400).json({ message: "No questions found in DB" });
+    }
+
+    const interview = await Interview.create({
+      userId: userId || "demoUser",
+      domain,
+      difficulty,
+      questionIds: questions.map(q => q._id),
+      currentQuestionIndex: 0
+    });
+
+    res.status(201).json({
+      interviewId: interview._id,
+      question: questions[0]
+    });
+
+  } catch (err) {
+    console.error("START ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 /* =========================
@@ -78,7 +89,7 @@ router.post("/answer", async (req, res) => {
 try {
 const { interviewId, userAnswer } = req.body;
 
-```
+
 const interview = await Interview.findById(interviewId).populate("questionIds");
 if (!interview) {
   return res.status(404).json({ message: "Interview not found" });
@@ -153,7 +164,7 @@ if (interview.currentQuestionIndex >= interview.questionIds.length) {
 res.json({
   nextQuestion: interview.questionIds[interview.currentQuestionIndex]
 });
-```
+
 
 } catch (err) {
 console.error(err);
