@@ -8,56 +8,74 @@ app = FastAPI()
 
 @app.get("/")
 def home():
-    return {"message": "Advanced AI Evaluation Running 🚀"}
-
+    return {"message": "AI Evaluation Service Running"}
 
 @app.post("/evaluate")
 def evaluate(data: dict):
-    user = data["userAnswer"].lower()
-    model = data["modelAnswer"].lower()
+    user = data["userAnswer"]
+    model = data["modelAnswer"]
 
-    # ========= 1. Similarity score =========
-    vectorizer = TfidfVectorizer()
-    vectors = vectorizer.fit_transform([user, model])
+    # ---------- CLEAN TEXT ----------
+    user_clean = user.lower()
+    model_clean = model.lower()
+
+    # ---------- SIMILARITY (KNOWLEDGE CHECK) ----------
+    vectorizer = TfidfVectorizer(stop_words="english")
+    vectors = vectorizer.fit_transform([user_clean, model_clean])
     similarity = cosine_similarity(vectors[0:1], vectors[1:2])[0][0]
-    similarity_score = similarity * 100
+    knowledge_score = similarity * 100
 
-    # ========= 2. Keyword match =========
-    model_keywords = list(set(re.findall(r'\b\w+\b', model)))
-    user_keywords = list(set(re.findall(r'\b\w+\b', user)))
+    # ---------- LENGTH CHECK (DEPTH) ----------
+    word_count = len(user.split())
 
-    match_count = len(set(model_keywords) & set(user_keywords))
-    keyword_score = (match_count / (len(model_keywords)+1)) * 100
+    if word_count > 120:
+        depth = 25
+    elif word_count > 60:
+        depth = 18
+    elif word_count > 30:
+        depth = 12
+    else:
+        depth = 5
 
-    # ========= 3. Length score =========
-    length_score = min(len(user.split()) * 2, 100)
+    # ---------- COMMUNICATION ----------
+    sentences = len(re.findall(r'[.!?]', user))
+    if sentences >= 4:
+        communication = 25
+    elif sentences >= 2:
+        communication = 18
+    else:
+        communication = 10
 
-    # ========= 4. Confidence detection =========
-    confidence_words = ["definitely", "clearly", "used", "helps", "important"]
-    confidence_score = 0
-    for w in confidence_words:
-        if w in user:
-            confidence_score += 10
-    confidence_score = min(confidence_score, 100)
+    # ---------- CONFIDENCE ----------
+    confident_words = ["definitely","clearly","important","ensures","helps","improves"]
+    hesitation_words = ["maybe","i think","not sure","probably","guess"]
 
-    # ========= FINAL AI SCORE =========
-    final_score = (
-        similarity_score * 0.4 +
-        keyword_score * 0.2 +
-        length_score * 0.2 +
-        confidence_score * 0.2
-    )
+    conf = 10
+    for w in confident_words:
+        if w in user_clean:
+            conf += 3
 
-    final_score = int(final_score)
+    for w in hesitation_words:
+        if w in user_clean:
+            conf -= 2
+
+    confidence = max(min(conf,25),5)
+
+    # ---------- TECH SCORE ----------
+    technical = int((knowledge_score/100)*25)
+
+    overall = technical + communication + confidence + depth
+    overall = min(overall,100)
+
+    sentiment = "positive" if overall > 60 else "neutral"
 
     return {
-        "aiScore": final_score,
-        "technical": min(final_score // 4, 25),
-        "communication": min(len(user.split()), 25),
-        "confidence": min(confidence_score // 4, 25),
-        "sentiment": "positive" if final_score > 50 else "neutral"
+        "aiScore": overall,
+        "technical": technical,
+        "communication": communication,
+        "confidence": confidence,
+        "sentiment": sentiment
     }
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=10000)
