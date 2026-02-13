@@ -8,87 +8,54 @@ app = FastAPI()
 
 @app.get("/")
 def home():
-    return {"message": "AI Evaluation Service Running 🚀"}
-
-
-# ===== CLEAN TEXT =====
-def clean_text(text):
-    text = text.lower()
-    text = re.sub(r'[^\w\s]', '', text)
-    return text
-
-
-# ===== KEYWORD EXTRACTION =====
-def get_keywords(text):
-    words = clean_text(text).split()
-    stopwords = {
-        "is","the","a","an","and","or","to","of","for","in","on","with",
-        "this","that","it","as","are","be","by","from","at","was","were"
-    }
-    return [w for w in words if w not in stopwords and len(w) > 2]
-
-
-# ===== CONFIDENCE CHECK =====
-def confidence_score(answer):
-    confident_words = ["definitely","clearly","sure","confident","always","will"]
-    hesitant_words = ["maybe","not sure","guess","probably","think"]
-
-    score = 15
-
-    for w in confident_words:
-        if w in answer.lower():
-            score += 5
-
-    for w in hesitant_words:
-        if w in answer.lower():
-            score -= 5
-
-    return max(min(score,25),5)
+    return {"message": "Advanced AI Evaluation Running 🚀"}
 
 
 @app.post("/evaluate")
 def evaluate(data: dict):
-    user = data["userAnswer"]
-    model = data["modelAnswer"]
+    user = data["userAnswer"].lower()
+    model = data["modelAnswer"].lower()
 
-    user_clean = clean_text(user)
-    model_clean = clean_text(model)
-
-    # ===== TF-IDF similarity =====
+    # ========= 1. Similarity score =========
     vectorizer = TfidfVectorizer()
-    vectors = vectorizer.fit_transform([user_clean, model_clean])
+    vectors = vectorizer.fit_transform([user, model])
     similarity = cosine_similarity(vectors[0:1], vectors[1:2])[0][0]
-    similarity_score = int(similarity * 100)
+    similarity_score = similarity * 100
 
-    # ===== keyword matching =====
-    model_keywords = set(get_keywords(model_clean))
-    user_keywords = set(get_keywords(user_clean))
+    # ========= 2. Keyword match =========
+    model_keywords = list(set(re.findall(r'\b\w+\b', model)))
+    user_keywords = list(set(re.findall(r'\b\w+\b', user)))
 
-    if len(model_keywords) == 0:
-        keyword_score = 0
-    else:
-        matched = model_keywords.intersection(user_keywords)
-        keyword_score = int((len(matched) / len(model_keywords)) * 100)
+    match_count = len(set(model_keywords) & set(user_keywords))
+    keyword_score = (match_count / (len(model_keywords)+1)) * 100
 
-    # ===== completeness (length check) =====
+    # ========= 3. Length score =========
     length_score = min(len(user.split()) * 2, 100)
 
-    # ===== final AI score =====
-    final_score = int((similarity_score * 0.4) + (keyword_score * 0.4) + (length_score * 0.2))
+    # ========= 4. Confidence detection =========
+    confidence_words = ["definitely", "clearly", "used", "helps", "important"]
+    confidence_score = 0
+    for w in confidence_words:
+        if w in user:
+            confidence_score += 10
+    confidence_score = min(confidence_score, 100)
 
-    # ===== skill scoring =====
-    technical = min(final_score // 4, 25)
-    communication = min(len(user.split()) // 2, 25)
-    confidence = confidence_score(user)
+    # ========= FINAL AI SCORE =========
+    final_score = (
+        similarity_score * 0.4 +
+        keyword_score * 0.2 +
+        length_score * 0.2 +
+        confidence_score * 0.2
+    )
 
-    sentiment = "positive" if final_score > 60 else "neutral"
+    final_score = int(final_score)
 
     return {
         "aiScore": final_score,
-        "technical": technical,
-        "communication": communication,
-        "confidence": confidence,
-        "sentiment": sentiment
+        "technical": min(final_score // 4, 25),
+        "communication": min(len(user.split()), 25),
+        "confidence": min(confidence_score // 4, 25),
+        "sentiment": "positive" if final_score > 50 else "neutral"
     }
 
 
