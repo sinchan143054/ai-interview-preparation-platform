@@ -13,7 +13,7 @@ router.get("/test", (req, res) => {
   res.json({ message: "INTERVIEW ROUTE WORKING 🚀" });
 });
 
-/* ========= START ========= */
+/* ========= START INTERVIEW ========= */
 router.post("/start", async (req, res) => {
   try {
     const { userId, domain, difficulty } = req.body;
@@ -29,8 +29,8 @@ router.post("/start", async (req, res) => {
 
     const interview = await Interview.create({
       userId,
-      domain,
-      difficulty,
+      domain: domain.toLowerCase(),
+      difficulty: difficulty.toLowerCase(),
       questionIds: questions.map(q => q._id),
       currentQuestionIndex: 0,
       status: "ongoing"
@@ -42,11 +42,12 @@ router.post("/start", async (req, res) => {
     });
 
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-/* ========= ANSWER ========= */
+/* ========= SUBMIT ANSWER ========= */
 router.post("/answer", async (req, res) => {
   try {
     const { interviewId, userAnswer } = req.body;
@@ -57,8 +58,11 @@ router.post("/answer", async (req, res) => {
     const index = interview.currentQuestionIndex;
     const question = interview.questionIds[index];
 
-    if (!question) return res.json({ message: "Interview finished" });
+    if (!question) {
+      return res.json({ message: "Interview finished" });
+    }
 
+    /* ==== fallback scoring ==== */
     let ai = {
       aiScore: Math.min(userAnswer.length, 100),
       sentiment: "neutral",
@@ -67,14 +71,18 @@ router.post("/answer", async (req, res) => {
       confidence: Math.min(userAnswer.length / 6, 25)
     };
 
+    /* ==== AI service ==== */
     try {
       const aiRes = await axios.post(
         "https://ai-evaluator-vgca.onrender.com/evaluate",
         { userAnswer, modelAnswer: question.modelAnswer }
       );
       ai = aiRes.data;
-    } catch {}
+    } catch (e) {
+      console.log("AI service failed, using fallback");
+    }
 
+    /* ==== save answer ==== */
     await Answer.create({
       interviewId,
       questionId: question._id,
@@ -89,7 +97,7 @@ router.post("/answer", async (req, res) => {
       }
     });
 
-    interview.currentQuestionIndex++;
+    interview.currentQuestionIndex += 1;
     await interview.save();
 
     if (interview.currentQuestionIndex >= interview.questionIds.length) {
@@ -101,50 +109,70 @@ router.post("/answer", async (req, res) => {
     });
 
   } catch (err) {
+    console.log(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-/* ========= FINAL SCORE ========= */
+/* ========= FINAL SCORE + SAVE ========= */
 router.post("/finish", async (req, res) => {
   try {
     const { interviewId } = req.body;
 
     const answers = await Answer.find({ interviewId });
-    if (!answers.length) return res.status(400).json({ message: "No answers" });
+    if (!answers.length) {
+      return res.status(400).json({ message: "No answers" });
+    }
 
-    let total = 0, tech = 0, comm = 0, conf = 0;
+    let total = 0, tech = 0, comm = 0, conf = 0, prob = 0;
 
     answers.forEach(a => {
       total += a.aiScore || 0;
       tech += a.skillScores?.technical || 0;
       comm += a.skillScores?.communication || 0;
       conf += a.skillScores?.confidence || 0;
+      prob += a.skillScores?.problemSolving || 0;
     });
 
     const count = answers.length;
 
-    res.json({
+    const finalScore = {
       overallScore: Math.round(total / count),
       technical: Math.round(tech / count),
       communication: Math.round(comm / count),
-      confidence: Math.round(conf / count)
+      confidence: Math.round(conf / count),
+      problemSolving: Math.round(prob / count)
+    };
+
+    /* ===== SAVE INTO INTERVIEW DB ===== */
+    await Interview.findByIdAndUpdate(interviewId, {
+      status: "completed",
+      overallScore: finalScore.overallScore,
+      skillSummary: {
+        technical: finalScore.technical,
+        communication: finalScore.communication,
+        confidence: finalScore.confidence,
+        problemSolving: finalScore.problemSolving
+      }
     });
 
+    res.json(finalScore);
+
   } catch (err) {
+    console.log("FINISH ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-
-/* =========================
-   GET USER ANALYTICS
-========================= */
+/* ========= USER ANALYTICS ========= */
 router.get("/analytics/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const interviews = await Interview.find({ userId });
+    const interviews = await Interview.find({
+      userId,
+      status: "completed"
+    });
 
     if (!interviews.length) {
       return res.json({
