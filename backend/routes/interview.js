@@ -136,4 +136,59 @@ router.post("/finish", async (req, res) => {
   }
 });
 
+
+/* =========================
+   GET USER ANALYTICS
+========================= */
+router.get("/analytics/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const interviews = await Interview.find({ userId });
+
+    if (!interviews.length) {
+      return res.json({
+        totalInterviews: 0,
+        avgScore: 0,
+        skills: {
+          technical: 0,
+          communication: 0,
+          confidence: 0,
+          problemSolving: 0
+        },
+        history: []
+      });
+    }
+
+    let totalScore = 0;
+    let tech = 0, comm = 0, conf = 0, prob = 0;
+
+    interviews.forEach(i => {
+      totalScore += i.overallScore || 0;
+      tech += i.skillSummary?.technical || 0;
+      comm += i.skillSummary?.communication || 0;
+      conf += i.skillSummary?.confidence || 0;
+      prob += i.skillSummary?.problemSolving || 0;
+    });
+
+    const count = interviews.length;
+
+    res.json({
+      totalInterviews: count,
+      avgScore: Math.round(totalScore / count),
+      skills: {
+        technical: Math.round(tech / count),
+        communication: Math.round(comm / count),
+        confidence: Math.round(conf / count),
+        problemSolving: Math.round(prob / count)
+      },
+      history: interviews
+    });
+
+  } catch (err) {
+    console.log("ANALYTICS ERROR:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
