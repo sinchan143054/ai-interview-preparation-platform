@@ -155,15 +155,7 @@ const Interview = () => {
                 </p>
               </div>
 
-              <div className="flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/dashboard')}
-                  disabled={loading}
-                  className="bg-gray-800/50 border-gray-700 text-white hover:bg-gray-700"
-                >
-                  Exit Interview
-                </Button>
+              <div className="flex justify-end">
                 <Button
                   onClick={handleSubmitAnswer}
                   disabled={loading}
