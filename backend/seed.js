@@ -187,6 +187,84 @@ const seedData = async () => {
         keywords: ['websocket', 'scalability', 'redis', 'microservices', 'load balancer', 'real-time'],
         category: 'system-design',
       },
+
+      // Additional Frontend Questions
+      {
+        domain: 'frontend',
+        difficulty: 'medium',
+        question: 'What is the difference between controlled and uncontrolled components in React?',
+        modelAnswer:
+          'Controlled components have their state managed by React through props and state. The component value is controlled by React state and updated via event handlers. Uncontrolled components store their own state internally using refs, similar to traditional HTML form elements. Controlled components provide more control and validation, while uncontrolled components are simpler for basic forms.',
+        keywords: ['controlled', 'uncontrolled', 'components', 'state', 'refs', 'forms'],
+        category: 'technical',
+      },
+      {
+        domain: 'frontend',
+        difficulty: 'hard',
+        question: 'Explain code splitting and lazy loading in React applications.',
+        modelAnswer:
+          'Code splitting breaks the application bundle into smaller chunks that are loaded on demand. React.lazy() enables dynamic imports for components, and Suspense provides a fallback UI during loading. This reduces initial bundle size, improves load time, and enhances performance. Webpack automatically handles code splitting with dynamic imports. Best practices include splitting routes, large components, and third-party libraries.',
+        keywords: ['code splitting', 'lazy loading', 'React.lazy', 'Suspense', 'dynamic import', 'webpack'],
+        category: 'technical',
+      },
+
+      // Additional Backend Questions  
+      {
+        domain: 'backend',
+        difficulty: 'medium',
+        question: 'What is JWT authentication and how does it work?',
+        modelAnswer:
+          'JWT (JSON Web Token) is a stateless authentication mechanism. After login, the server generates a signed token containing user data and sends it to the client. The client stores it and includes it in subsequent requests via the Authorization header. The server verifies the token signature without database lookups. JWTs consist of header, payload, and signature, encoded in Base64. Benefits include statelessness, scalability, and cross-domain support.',
+        keywords: ['jwt', 'authentication', 'token', 'stateless', 'authorization', 'signature'],
+        category: 'technical',
+      },
+      {
+        domain: 'backend',
+        difficulty: 'hard',
+        question: 'Explain database transactions and ACID properties.',
+        modelAnswer:
+          'Database transactions are sequences of operations treated as a single unit. ACID ensures reliability: Atomicity (all or nothing execution), Consistency (valid state transitions), Isolation (concurrent transactions don\'t interfere), and Durability (committed changes persist). Transactions use BEGIN, COMMIT, and ROLLBACK. They prevent data corruption, ensure integrity, and handle concurrent access through locking mechanisms.',
+        keywords: ['transactions', 'acid', 'atomicity', 'consistency', 'isolation', 'durability', 'database'],
+        category: 'technical',
+      },
+      {
+        domain: 'backend',
+        difficulty: 'easy',
+        question: 'What is the purpose of environment variables?',
+        modelAnswer:
+          'Environment variables store configuration values outside the codebase, such as API keys, database URLs, and secrets. They enable different configurations for development, staging, and production without code changes. Benefits include security (sensitive data not in code), flexibility (easy configuration changes), and portability. They are accessed via process.env in Node.js and loaded from .env files using libraries like dotenv.',
+        keywords: ['environment variables', 'configuration', 'security', 'secrets', 'dotenv', 'process.env'],
+        category: 'general',
+      },
+
+      // Additional Full Stack Questions
+      {
+        domain: 'fullstack',
+        difficulty: 'medium',
+        question: 'How would you handle file uploads in a full-stack application?',
+        modelAnswer:
+          'File uploads require frontend form with multipart/form-data encoding, backend middleware like Multer (Node.js) to parse files, validation for file type and size, storage options (local disk, cloud storage like S3), and security measures. Implementation includes: client-side preview, progress indicators, server-side validation, secure file naming, virus scanning, and CDN delivery for uploaded files. Consider chunked uploads for large files.',
+        keywords: ['file upload', 'multipart', 'multer', 'storage', 's3', 'validation', 'security'],
+        category: 'technical',
+      },
+      {
+        domain: 'fullstack',
+        difficulty: 'hard',
+        question: 'Design a caching strategy for a high-traffic web application.',
+        modelAnswer:
+          'A comprehensive caching strategy includes: Browser caching (Cache-Control headers), CDN caching for static assets, Redis/Memcached for database query results and session data, API response caching with proper TTL, and cache invalidation strategies. Implement cache-aside pattern, use cache keys effectively, handle cache stampede with locks, monitor cache hit rates, and implement stale-while-revalidate for better UX. Consider different cache layers and invalidation policies.',
+        keywords: ['caching', 'redis', 'cdn', 'cache-control', 'ttl', 'invalidation', 'performance'],
+        category: 'system-design',
+      },
+      {
+        domain: 'fullstack',
+        difficulty: 'easy',
+        question: 'What is CORS and why is it important?',
+        modelAnswer:
+          'CORS (Cross-Origin Resource Sharing) is a security mechanism that allows or restricts resources on a web server to be accessed from a different domain. Browsers block cross-origin requests by default for security. CORS headers (Access-Control-Allow-Origin) enable controlled access. It\'s important for API security, preventing unauthorized access, and enabling legitimate cross-domain requests. Properly configured CORS protects against CSRF attacks.',
+        keywords: ['cors', 'cross-origin', 'security', 'headers', 'access-control', 'same-origin policy'],
+        category: 'general',
+      },
     ];
 
     await Question.insertMany(questions);
