@@ -238,18 +238,26 @@ const InterviewResult = () => {
                     <p className="text-gray-200 text-sm">{q.userAnswer || 'No answer provided'}</p>
                   </div>
 
+                  <div className="bg-green-900/20 border border-green-500/30 p-3 rounded mb-3">
+                    <p className="text-sm text-green-400 mb-1 font-semibold flex items-center gap-2">
+                      <Award className="h-4 w-4" />
+                      Model Answer (100% Score):
+                    </p>
+                    <p className="text-gray-300 text-sm leading-relaxed">{q.modelAnswer}</p>
+                  </div>
+
                   <div className="grid grid-cols-3 gap-3 text-sm">
                     <div>
                       <span className="text-gray-400">Technical:</span>{' '}
-                      <span className="text-blue-400 font-semibold">{q.scores.technical}</span>
+                      <span className="text-blue-400 font-semibold">{q.scores.technical}/25</span>
                     </div>
                     <div>
                       <span className="text-gray-400">Communication:</span>{' '}
-                      <span className="text-green-400 font-semibold">{q.scores.communication}</span>
+                      <span className="text-green-400 font-semibold">{q.scores.communication}/25</span>
                     </div>
                     <div>
                       <span className="text-gray-400">Confidence:</span>{' '}
-                      <span className="text-orange-400 font-semibold">{q.scores.confidence}</span>
+                      <span className="text-orange-400 font-semibold">{q.scores.confidence}/25</span>
                     </div>
                   </div>
                 </div>
