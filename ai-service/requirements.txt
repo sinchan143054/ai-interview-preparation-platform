@@ -1,6 +1,13 @@
+<<<<<<< HEAD
 fastapi==0.115.12
 uvicorn==0.34.1
 scikit-learn==1.5.2
 numpy==2.0.0
 pydantic==2.10.5
 python-multipart==0.0.20
+=======
+ fastapi
+uvicorn
+scikit-learn
+numpy
+>>>>>>> 8003e494214bb2133a2047589e7457e31cba5851

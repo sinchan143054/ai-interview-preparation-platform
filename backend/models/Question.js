@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const mongoose = require('mongoose');
 
 const questionSchema = new mongoose.Schema(
@@ -33,3 +34,15 @@ const questionSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('Question', questionSchema);
+=======
+const mongoose = require("mongoose");
+
+const questionSchema = new mongoose.Schema({
+  domain: String,        // frontend, backend, fullstack, etc
+  difficulty: String,    // easy, medium, hard
+  question: String,
+  modelAnswer: String
+}, { timestamps: true });
+
+module.exports = mongoose.model("Question", questionSchema);
+>>>>>>> 8003e494214bb2133a2047589e7457e31cba5851
