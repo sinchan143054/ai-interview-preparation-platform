@@ -105,30 +105,38 @@ def evaluate(data: EvaluationRequest):
         confident_words = [
             'definitely', 'clearly', 'important', 'ensures', 'helps', 'improves',
             'always', 'never', 'must', 'will', 'should', 'essential', 'critical',
-            'precisely', 'exactly', 'certainly', 'obviously'
+            'precisely', 'exactly', 'certainly', 'obviously', 'absolutely', 'indeed'
         ]
         hesitation_words = [
             'maybe', 'i think', 'not sure', 'probably', 'guess', 'might',
-            'perhaps', 'possibly', 'kind of', 'sort of', 'i believe', 'i feel'
+            'perhaps', 'possibly', 'kind of', 'sort of', 'i believe', 'i feel',
+            'idk', "i don't know", 'dunno', 'umm', 'uh', 'like', 'you know'
         ]
 
         confidence = 10  # Base score
+        
+        # Check for very short or meaningless answers
+        if word_count < 10:
+            confidence = 2
+        # Check if answer is just variations of "idk"
+        elif any(word in user_clean for word in ['idk', "don't know", 'dunno', 'no idea']):
+            confidence = 1  # Very low confidence for "idk" type answers
+        else:
+            for word in confident_words:
+                if word in user_clean:
+                    confidence += 2
 
-        for word in confident_words:
-            if word in user_clean:
-                confidence += 2
+            for word in hesitation_words:
+                if word in user_clean:
+                    confidence -= 4  # Increased penalty
 
-        for word in hesitation_words:
-            if word in user_clean:
-                confidence -= 3
+            # Length confidence (longer detailed answers show confidence)
+            if word_count > 80:
+                confidence += 5
+            elif word_count > 40:
+                confidence += 3
 
-        # Length confidence (longer detailed answers show confidence)
-        if word_count > 80:
-            confidence += 4
-        elif word_count > 40:
-            confidence += 2
-
-        confidence = max(min(confidence, 25), 3)  # Between 3 and 25
+        confidence = max(min(confidence, 25), 1)  # Between 1 and 25
 
         # ========== OVERALL SCORE ==========
         overall = min(technical + communication + confidence, 100)
